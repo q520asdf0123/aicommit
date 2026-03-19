@@ -17,7 +17,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 
 class GenerateCommitMessageAction : AnAction() {
 
@@ -30,7 +32,9 @@ class GenerateCommitMessageAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val commitMessage = e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL) as? CommitMessage ?: return
-        val changes = e.getData(VcsDataKeys.CHANGES) ?: emptyArray()
+
+        // 尝试多种方式获取变更列表
+        val changes: List<Change> = getChanges(e, project)
 
         if (changes.isEmpty()) {
             notify(project, "请先选中要提交的文件", NotificationType.WARNING)
@@ -51,7 +55,7 @@ class GenerateCommitMessageAction : AnAction() {
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "正在生成 Commit Message...", true) {
             override fun run(indicator: ProgressIndicator) {
                 try {
-                    val diff = DiffCollector.collectFromChanges(changes.toList())
+                    val diff = DiffCollector.collectFromChanges(changes)
                     if (diff.isBlank()) {
                         notify(project, "无法获取文件变更内容", NotificationType.WARNING)
                         return
@@ -83,6 +87,32 @@ class GenerateCommitMessageAction : AnAction() {
                 }
             }
         })
+    }
+
+    private fun getChanges(e: AnActionEvent, project: com.intellij.openapi.project.Project): List<Change> {
+        // 方式1：从 ActionEvent DataContext 获取（某些 IDEA 版本可用）
+        val eventChanges = e.getData(VcsDataKeys.CHANGES)
+        if (eventChanges != null && eventChanges.isNotEmpty()) {
+            return eventChanges.toList()
+        }
+
+        // 方式2：从 CommitWorkflowHandler 获取（新版 IDEA commit 面板）
+        try {
+            val workflowHandler = e.getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
+            if (workflowHandler is AbstractCommitWorkflowHandler<*, *>) {
+                val ui = workflowHandler.ui
+                val includedChanges = ui.getIncludedChanges()
+                if (includedChanges.isNotEmpty()) {
+                    return includedChanges
+                }
+            }
+        } catch (_: Exception) {
+            // 忽略，尝试下一种方式
+        }
+
+        // 方式3：回退到 ChangeListManager 获取默认 changelist
+        val clm = ChangeListManager.getInstance(project)
+        return clm.defaultChangeList.changes.toList()
     }
 
     private fun createProvider(id: String, settings: AiCommitSettings): AiProvider {
