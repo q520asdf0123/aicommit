@@ -42,7 +42,10 @@ class AiCommitConfigurable : Configurable {
                 row("模型:") { cell(openaiModelField).columns(COLUMNS_MEDIUM) }
             }
             group("自定义") {
-                row("Base URL:") { cell(customUrlField).columns(COLUMNS_LARGE) }
+                row("Base URL:") {
+                    cell(customUrlField).columns(COLUMNS_LARGE)
+                        .comment("如 http://localhost:11434/v1，无需包含 /chat/completions")
+                }
                 row("API Key:") { cell(customKeyField).columns(COLUMNS_LARGE) }
                 row("模型:") { cell(customModelField).columns(COLUMNS_MEDIUM) }
             }

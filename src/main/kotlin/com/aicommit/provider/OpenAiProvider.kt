@@ -19,7 +19,10 @@ open class OpenAiProvider(
     private val gson = Gson()
 
     override suspend fun generate(prompt: String): String = withContext(Dispatchers.IO) {
-        val url = URI("$baseUrl/chat/completions").toURL()
+        val normalizedBase = baseUrl.trimEnd('/')
+            .removeSuffix("/chat/completions")
+            .removeSuffix("/v1/chat/completions")
+        val url = URI("$normalizedBase/chat/completions").toURL()
         val conn = url.openConnection() as HttpURLConnection
         try {
             conn.requestMethod = "POST"
