@@ -4,6 +4,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonParser
 import java.net.HttpURLConnection
 import java.net.URI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class ClaudeProvider(
     private val apiKey: String,
@@ -15,27 +17,31 @@ class ClaudeProvider(
 
     private val gson = Gson()
 
-    override suspend fun generate(prompt: String): String {
+    override suspend fun generate(prompt: String): String = withContext(Dispatchers.IO) {
         val url = URI("https://api.anthropic.com/v1/messages").toURL()
         val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "POST"
-        conn.setRequestProperty("Content-Type", "application/json")
-        conn.setRequestProperty("x-api-key", apiKey)
-        conn.setRequestProperty("anthropic-version", "2023-06-01")
-        conn.connectTimeout = 30_000
-        conn.readTimeout = 30_000
-        conn.doOutput = true
+        try {
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("x-api-key", apiKey)
+            conn.setRequestProperty("anthropic-version", "2023-06-01")
+            conn.connectTimeout = 30_000
+            conn.readTimeout = 30_000
+            conn.doOutput = true
 
-        conn.outputStream.use { it.write(buildRequestBody(prompt).toByteArray()) }
+            conn.outputStream.use { it.write(buildRequestBody(prompt).toByteArray()) }
 
-        val status = conn.responseCode
-        if (status != 200) {
-            val error = conn.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
-            throw RuntimeException("Claude API error ($status): $error")
+            val status = conn.responseCode
+            if (status != 200) {
+                val error = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "Unknown error"
+                throw RuntimeException("Claude API error ($status): $error")
+            }
+
+            val response = conn.inputStream.bufferedReader().use { it.readText() }
+            parseResponse(response)
+        } finally {
+            conn.disconnect()
         }
-
-        val response = conn.inputStream.bufferedReader().readText()
-        return parseResponse(response)
     }
 
     fun buildRequestBody(prompt: String): String {
