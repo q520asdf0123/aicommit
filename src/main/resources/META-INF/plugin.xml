@@ -1,0 +1,29 @@
+<idea-plugin>
+    <id>com.aicommit.ai-commit</id>
+    <name>AI Commit</name>
+    <vendor>aicommit</vendor>
+    <description>AI-powered commit message generation supporting Claude, OpenAI, and custom providers.</description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>Git4Idea</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService
+            serviceImplementation="com.aicommit.settings.AiCommitSettings"/>
+        <applicationConfigurable
+            parentId="tools"
+            instance="com.aicommit.settings.AiCommitConfigurable"
+            id="com.aicommit.settings"
+            displayName="AI Commit"/>
+    </extensions>
+
+    <actions>
+        <action id="AiCommit.Generate"
+                class="com.aicommit.action.GenerateCommitMessageAction"
+                text="AI 生成 Commit Message"
+                description="使用 AI 生成 commit message"
+                icon="/icons/ai-generate.svg">
+            <add-to-group group-id="Vcs.MessageActionGroup" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
