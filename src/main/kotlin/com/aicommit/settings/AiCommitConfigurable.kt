@@ -12,7 +12,10 @@ class AiCommitConfigurable : Configurable {
 
     private val settings = AiCommitSettings.getInstance()
 
-    private val providerCombo = javax.swing.JComboBox(arrayOf("claude", "openai", "custom"))
+    private val providerCombo = javax.swing.JComboBox(arrayOf(
+        "claude", "openai", "custom", "gemini",
+        "claude-code", "codex", "gemini-cli"
+    ))
     private val claudeKeyField = JBPasswordField()
     private val claudeModelField = JBTextField()
     private val openaiKeyField = JBPasswordField()
@@ -20,6 +23,12 @@ class AiCommitConfigurable : Configurable {
     private val customKeyField = JBPasswordField()
     private val customModelField = JBTextField()
     private val customUrlField = JBTextField()
+    private val geminiKeyField = JBPasswordField()
+    private val geminiModelField = JBTextField()
+    private val geminiBaseUrlField = JBTextField()
+    private val claudeCodePathField = JBTextField()
+    private val codexPathField = JBTextField()
+    private val geminiCliPathField = JBTextField()
     private val promptField = JBTextArea(5, 40)
 
     override fun getDisplayName() = "AI Commit"
@@ -33,21 +42,47 @@ class AiCommitConfigurable : Configurable {
                         .comment("使用 {{diff}} 作为 diff 内容占位符。留空使用默认模板。")
                 }
             }
-            group("Claude") {
+            group("Claude API") {
                 row("API Key:") { cell(claudeKeyField).columns(COLUMNS_LARGE) }
                 row("模型:") { cell(claudeModelField).columns(COLUMNS_MEDIUM) }
             }
-            group("OpenAI") {
+            group("OpenAI API") {
                 row("API Key:") { cell(openaiKeyField).columns(COLUMNS_LARGE) }
                 row("模型:") { cell(openaiModelField).columns(COLUMNS_MEDIUM) }
             }
-            group("自定义") {
+            group("自定义 API") {
                 row("Base URL:") {
                     cell(customUrlField).columns(COLUMNS_LARGE)
                         .comment("如 http://localhost:11434/v1，无需包含 /chat/completions")
                 }
                 row("API Key:") { cell(customKeyField).columns(COLUMNS_LARGE) }
                 row("模型:") { cell(customModelField).columns(COLUMNS_MEDIUM) }
+            }
+            group("Gemini API") {
+                row("API Key:") { cell(geminiKeyField).columns(COLUMNS_LARGE) }
+                row("模型:") { cell(geminiModelField).columns(COLUMNS_MEDIUM) }
+                row("Base URL:") {
+                    cell(geminiBaseUrlField).columns(COLUMNS_LARGE)
+                        .comment("默认 https://generativelanguage.googleapis.com")
+                }
+            }
+            group("Claude Code CLI") {
+                row("CLI 路径:") {
+                    cell(claudeCodePathField).columns(COLUMNS_LARGE)
+                        .comment("留空则使用系统 PATH 中的 claude 命令")
+                }
+            }
+            group("Codex CLI") {
+                row("CLI 路径:") {
+                    cell(codexPathField).columns(COLUMNS_LARGE)
+                        .comment("留空则使用系统 PATH 中的 codex 命令")
+                }
+            }
+            group("Gemini CLI") {
+                row("CLI 路径:") {
+                    cell(geminiCliPathField).columns(COLUMNS_LARGE)
+                        .comment("留空则使用系统 PATH 中的 gemini 命令")
+                }
             }
         }
     }
@@ -62,6 +97,12 @@ class AiCommitConfigurable : Configurable {
                 String(customKeyField.password) != settings.getApiKey("custom") ||
                 customModelField.text != state.customModel ||
                 customUrlField.text != state.customBaseUrl ||
+                String(geminiKeyField.password) != settings.getApiKey("gemini") ||
+                geminiModelField.text != state.geminiModel ||
+                geminiBaseUrlField.text != state.geminiBaseUrl ||
+                claudeCodePathField.text != state.claudeCodePath ||
+                codexPathField.text != state.codexPath ||
+                geminiCliPathField.text != state.geminiCliPath ||
                 promptField.text != state.promptTemplate
     }
 
@@ -72,11 +113,17 @@ class AiCommitConfigurable : Configurable {
         state.openaiModel = openaiModelField.text
         state.customModel = customModelField.text
         state.customBaseUrl = customUrlField.text
+        state.geminiModel = geminiModelField.text
+        state.geminiBaseUrl = geminiBaseUrlField.text
+        state.claudeCodePath = claudeCodePathField.text
+        state.codexPath = codexPathField.text
+        state.geminiCliPath = geminiCliPathField.text
         state.promptTemplate = promptField.text
 
         settings.setApiKey("claude", String(claudeKeyField.password))
         settings.setApiKey("openai", String(openaiKeyField.password))
         settings.setApiKey("custom", String(customKeyField.password))
+        settings.setApiKey("gemini", String(geminiKeyField.password))
     }
 
     override fun reset() {
@@ -89,6 +136,12 @@ class AiCommitConfigurable : Configurable {
         customKeyField.text = settings.getApiKey("custom")
         customModelField.text = state.customModel
         customUrlField.text = state.customBaseUrl
+        geminiKeyField.text = settings.getApiKey("gemini")
+        geminiModelField.text = state.geminiModel
+        geminiBaseUrlField.text = state.geminiBaseUrl
+        claudeCodePathField.text = state.claudeCodePath
+        codexPathField.text = state.codexPath
+        geminiCliPathField.text = state.geminiCliPath
         promptField.text = state.promptTemplate
     }
 }

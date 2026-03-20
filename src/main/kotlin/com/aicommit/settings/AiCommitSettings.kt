@@ -19,6 +19,11 @@ class AiCommitSettings : PersistentStateComponent<AiCommitSettings.State> {
         var openaiModel: String = "gpt-4o",
         var customModel: String = "",
         var customBaseUrl: String = "",
+        var geminiModel: String = "gemini-2.0-flash",
+        var geminiBaseUrl: String = "https://generativelanguage.googleapis.com",
+        var claudeCodePath: String = "",
+        var codexPath: String = "",
+        var geminiCliPath: String = "",
         var promptTemplate: String = ""
     )
 

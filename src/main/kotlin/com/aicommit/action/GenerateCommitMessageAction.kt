@@ -1,9 +1,6 @@
 package com.aicommit.action
 
-import com.aicommit.provider.AiProvider
-import com.aicommit.provider.ClaudeProvider
-import com.aicommit.provider.CustomProvider
-import com.aicommit.provider.OpenAiProvider
+import com.aicommit.provider.*
 import com.aicommit.service.CommitMessageGenerator
 import com.aicommit.service.DiffCollector
 import com.aicommit.settings.AiCommitSettings
@@ -45,7 +42,8 @@ class GenerateCommitMessageAction : AnAction() {
         val providerId = settings.state.defaultProvider
         val apiKey = settings.getApiKey(providerId)
 
-        if (apiKey.isBlank() && providerId != "custom") {
+        val isCliProvider = providerId in listOf("claude-code", "codex", "gemini-cli")
+        if (apiKey.isBlank() && !isCliProvider && providerId != "custom") {
             notify(project, "请先在 Settings → Tools → AI Commit 中配置 ${providerId} 的 API Key", NotificationType.WARNING)
             return
         }
@@ -130,6 +128,20 @@ class GenerateCommitMessageAction : AnAction() {
                 apiKey = settings.getApiKey("custom"),
                 model = state.customModel,
                 baseUrl = state.customBaseUrl
+            )
+            "gemini" -> GeminiApiProvider(
+                apiKey = settings.getApiKey("gemini"),
+                model = state.geminiModel,
+                baseUrl = state.geminiBaseUrl
+            )
+            "claude-code" -> ClaudeCodeCliProvider(
+                cliPath = state.claudeCodePath
+            )
+            "codex" -> CodexCliProvider(
+                cliPath = state.codexPath
+            )
+            "gemini-cli" -> GeminiCliProvider(
+                cliPath = state.geminiCliPath
             )
             else -> throw IllegalArgumentException("未知的 AI 提供商: $id")
         }
