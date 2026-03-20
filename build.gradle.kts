@@ -27,15 +27,26 @@ dependencies {
 }
 
 intellijPlatform {
+    instrumentCode = false
     pluginConfiguration {
         id = "com.aicommit.ai-commit"
-        name = "AI Commit"
+        name = "AI Commit Generator"
         version = providers.gradleProperty("pluginVersion").get()
         description = "AI-powered commit message generation for IntelliJ IDEA"
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild").get()
             untilBuild = providers.gradleProperty("pluginUntilBuild").get()
         }
+    }
+
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+    }
+
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
     }
 }
 

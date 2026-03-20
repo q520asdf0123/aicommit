@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>com.aicommit.ai-commit</id>
-    <name>AI Commit</name>
+    <name>AI Commit Generator</name>
     <vendor>aicommit</vendor>
     <description>AI-powered commit message generation supporting Claude, OpenAI, and custom providers.</description>
 
