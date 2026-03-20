@@ -4,7 +4,7 @@ import com.aicommit.provider.AiProvider
 
 object CommitMessageGenerator {
 
-    private val DEFAULT_TEMPLATE = """
+    val DEFAULT_TEMPLATE = """
 根据以下 git diff 生成一条 Conventional Commits 格式的 commit message。
 
 规则：
@@ -12,8 +12,18 @@ object CommitMessageGenerator {
 - type 可选：feat, fix, refactor, docs, style, test, chore, perf
 - scope 从变更的模块/目录推断
 - description 用简洁的中文描述变更内容
-- 如有多个不相关变更，用换行分隔 body 说明
+- 如果涉及多个文件或模块的变更，必须在 body 中逐条列出每个文件/模块的主要变更内容
+- body 使用 "- " 开头的列表格式，每条说明一个具体变更
+- 变更文件越多，body 描述应越详细，确保每个重要变更都被提及
 - 只输出 commit message 本身，不要其他解释
+
+示例（多文件变更时）：
+feat(provider): 新增多个 AI 提供商支持
+
+- 新增 CliBaseProvider 抽象基类，封装 CLI 进程执行逻辑
+- 新增 ClaudeCodeCliProvider，支持 claude 命令行调用
+- 修改 AiCommitSettings，新增 CLI 路径配置字段
+- 修改 AiCommitConfigurable，新增设置 UI 分组
 
 Diff:
 {{diff}}

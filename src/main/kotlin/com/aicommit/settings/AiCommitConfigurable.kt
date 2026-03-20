@@ -1,12 +1,18 @@
 package com.aicommit.settings
 
+import com.aicommit.service.CommitMessageGenerator
 import com.intellij.openapi.options.Configurable
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import java.awt.Color
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 
 class AiCommitConfigurable : Configurable {
 
@@ -29,17 +35,23 @@ class AiCommitConfigurable : Configurable {
     private val claudeCodePathField = JBTextField()
     private val codexPathField = JBTextField()
     private val geminiCliPathField = JBTextField()
-    private val promptField = JBTextArea(5, 40)
+    private val promptField = JBTextArea(10, 60)
+    private val resetPromptButton = JButton("恢复默认模板")
 
     override fun getDisplayName() = "AI Commit"
 
     override fun createComponent(): JComponent {
+        setupPromptField()
         return panel {
             group("通用") {
                 row("默认提供商:") { cell(providerCombo) }
                 row("Prompt 模板:") {
-                    cell(promptField)
+                    cell(JScrollPane(promptField))
                         .comment("使用 {{diff}} 作为 diff 内容占位符。留空使用默认模板。")
+                }
+                row("") {
+                    cell(resetPromptButton)
+                        .comment("点击将模板恢复为内置默认值")
                 }
             }
             group("Claude API") {
@@ -103,7 +115,7 @@ class AiCommitConfigurable : Configurable {
                 claudeCodePathField.text != state.claudeCodePath ||
                 codexPathField.text != state.codexPath ||
                 geminiCliPathField.text != state.geminiCliPath ||
-                promptField.text != state.promptTemplate
+                getPromptText() != state.promptTemplate
     }
 
     override fun apply() {
@@ -118,7 +130,7 @@ class AiCommitConfigurable : Configurable {
         state.claudeCodePath = claudeCodePathField.text
         state.codexPath = codexPathField.text
         state.geminiCliPath = geminiCliPathField.text
-        state.promptTemplate = promptField.text
+        state.promptTemplate = getPromptText()
 
         settings.setApiKey("claude", String(claudeKeyField.password))
         settings.setApiKey("openai", String(openaiKeyField.password))
@@ -143,5 +155,46 @@ class AiCommitConfigurable : Configurable {
         codexPathField.text = state.codexPath
         geminiCliPathField.text = state.geminiCliPath
         promptField.text = state.promptTemplate
+        updatePlaceholder()
+    }
+
+    private fun getPromptText(): String {
+        return if (isShowingPlaceholder) "" else promptField.text
+    }
+
+    private fun setupPromptField() {
+        promptField.lineWrap = true
+        promptField.wrapStyleWord = true
+
+        resetPromptButton.addActionListener {
+            promptField.text = CommitMessageGenerator.DEFAULT_TEMPLATE
+            promptField.foreground = null
+        }
+
+        promptField.addFocusListener(object : FocusAdapter() {
+            override fun focusGained(e: FocusEvent?) {
+                if (isShowingPlaceholder) {
+                    promptField.text = ""
+                    promptField.foreground = null
+                    isShowingPlaceholder = false
+                }
+            }
+
+            override fun focusLost(e: FocusEvent?) {
+                updatePlaceholder()
+            }
+        })
+    }
+
+    private var isShowingPlaceholder = false
+
+    private fun updatePlaceholder() {
+        if (promptField.text.isBlank()) {
+            promptField.foreground = Color.GRAY
+            promptField.text = CommitMessageGenerator.DEFAULT_TEMPLATE
+            isShowingPlaceholder = true
+        } else {
+            isShowingPlaceholder = false
+        }
     }
 }

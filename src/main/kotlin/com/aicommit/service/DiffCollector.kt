@@ -10,7 +10,7 @@ data class FileDiff(
 
 object DiffCollector {
 
-    private const val DEFAULT_MAX_LENGTH = 8000
+    private const val DEFAULT_MAX_LENGTH = 16000
 
     fun collectFromChanges(changes: Collection<Change>): String {
         val fileDiffs = changes.mapNotNull { change ->
